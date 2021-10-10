@@ -1,0 +1,34 @@
+/* 共通スタイル */
+body {
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  
+  .wrapper{
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  /* ターゲット */
+  #target{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 150px;
+    height: 150px;
+    line-height: 150px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    background-color: red;
+    transition: border-radius 0.5s;
+  }
+  
+  #target.radius{
+    border-radius: 50px;
+  }
