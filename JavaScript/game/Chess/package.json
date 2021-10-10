@@ -1,0 +1,10 @@
+{
+    "name": "chess",
+    "main": "index.html",
+    "window": {
+        "title": "",
+        "width": 300,
+        "height": 300,
+        "transparent": true
+      }
+}
