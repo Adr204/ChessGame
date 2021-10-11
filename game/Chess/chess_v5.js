@@ -106,13 +106,16 @@ class Game {
         ];
        this.flag = {
             cast: new Map(),
+            promo: new Map(),
             enpass: new Map(),
-            turn: true
+            turn: true,
         };
     }
     setFlag() {
         this.flag.cast.set(true,[true,true,true]);
         this.flag.cast.set(false,[true,true,true]);
+        this.flag.promo.set(true,[false,new Pos()]);
+        this.flag.promo.set(false,[false,new Pos()]);
         this.flag.enpass.set(true,[false,new Pos()]);
         this.flag.enpass.set(false,[false,new Pos()]);
     }
@@ -127,6 +130,18 @@ class Game {
                 master.ctx.drawImage(img,s*x,s*y,s,s);
             }
         }
+    }
+    drawPromo() {
+        push();
+        let img,s = master.size;
+        master.ctx.fillStyle = '#ffffff';
+        master.ctx.fillRect(s,s*4,s*8,s*2);
+        for(let i = 2;i < 6;i++) {
+            if(!this.flag.turn) img = master.imgW[i];
+            else img = master.imgB[i];
+            master.ctx.drawImage(img,s*(i-2)*2+s,s*4,s*2,s*2);
+        }
+        pop();
     }
     calcMove(from,tiles = Master.makeTiles(),stack = false) {
         // tilesに移動できる場所を書き込む
@@ -249,17 +264,17 @@ class Game {
                 break;
             case 8:// プロモーション(敵駒アリ)
             case 9:// プロモーション(敵駒ナシ)
-                // プロモーション画面表示
-                console.log("プロモーション!!!");
+                this.flag.promo.get(turn)[0] = true;
+                this.flag.promo.get(turn)[1] = new Pos(to.x,to.y);
                 break;
         }
-        if(to.isEqual(1,8)) this.flag.cast.get(true)[0] = false;
-        if(to.isEqual(5,8)) this.flag.cast.get(true)[1] = false;
-        if(to.isEqual(8,8)) this.flag.cast.get(true)[2] = false;
+        if(from.isEqual(new Pos(1,8))) this.flag.cast.get(true)[0] = false;
+        if(from.isEqual(new Pos(5,8))) this.flag.cast.get(true)[1] = false;
+        if(from.isEqual(new Pos(8,8))) this.flag.cast.get(true)[2] = false;
         
-        if(to.isEqual(1,1)) this.flag.cast.get(false)[0] = false;
-        if(to.isEqual(5,1)) this.flag.cast.get(false)[1] = false;
-        if(to.isEqual(8,1)) this.flag.cast.get(false)[2] = false;
+        if(from.isEqual(new Pos(1,1))) this.flag.cast.get(false)[0] = false;
+        if(from.isEqual(new Pos(5,1))) this.flag.cast.get(false)[1] = false;
+        if(from.isEqual(new Pos(8,1))) this.flag.cast.get(false)[2] = false;
 
         this.flag.enpass.get(!turn)[0] = false;
     }
@@ -330,8 +345,8 @@ class Pos {
         this.x = x;
         this.y = y;
     }
-    isEqual(to) {
-        if(this.x == to.x && this.y == to.y) return true;
+    isEqual(...to) {
+        if(to.some(p => this.x == p.x && this.y == p.y)) return true;
         return false;
     }
 }
@@ -407,11 +422,26 @@ function drawF() {
     if(cursor.isHold) cursor.drawMove();
     game.draw();
     cursor.draw();
+    if(game.flag.promo.get(!game.flag.turn)[0]) game.drawPromo();
 }
 
 function Main() {
     // ループするメインの処理を書く
     console.log("Main");
+    if(game.flag.promo.get(!game.flag.turn)[0]) {
+        let p = game.flag.promo.get(!game.flag.turn)[1];
+        if(cursor.pos.isEqual(new Pos(1,4),new Pos(2,4),new Pos(1,5),new Pos(2,5))) {
+            game.board[p.y][p.x] = 2;
+        } else if(cursor.pos.isEqual(new Pos(3,4),new Pos(4,4),new Pos(3,5),new Pos(4,5))) {
+            game.board[p.y][p.x] = 3;
+        } else if(cursor.pos.isEqual(new Pos(5,4),new Pos(6,4),new Pos(5,5),new Pos(6,5))) {
+            game.board[p.y][p.x] = 4;
+        } else if(cursor.pos.isEqual(new Pos(7,4),new Pos(8,4),new Pos(7,5),new Pos(8,5))) {
+            game.board[p.y][p.x] = 5;
+        }
+        game.flag.promo.get(!game.flag.turn)[0] = false;
+        return;
+    }
     if(cursor.isHold) {
         if(cursor.isPut()) {
             game.move(cursor.holdPiece,cursor.pos);
