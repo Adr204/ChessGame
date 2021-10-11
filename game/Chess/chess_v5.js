@@ -426,7 +426,7 @@ function drawF() {
 }
 
 function Main() {
-    // ループするメインの処理を書く
+    // ループするメインの処理を書くよ
     console.log("Main");
     if(game.flag.promo.get(!game.flag.turn)[0]) {
         let p = game.flag.promo.get(!game.flag.turn)[1];
