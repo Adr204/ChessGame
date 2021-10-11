@@ -430,15 +430,10 @@ function Main() {
     console.log("Main");
     if(game.flag.promo.get(!game.flag.turn)[0]) {
         let p = game.flag.promo.get(!game.flag.turn)[1];
-        if(cursor.pos.isEqual(new Pos(1,4),new Pos(2,4),new Pos(1,5),new Pos(2,5))) {
-            game.board[p.y][p.x] = 2;
-        } else if(cursor.pos.isEqual(new Pos(3,4),new Pos(4,4),new Pos(3,5),new Pos(4,5))) {
-            game.board[p.y][p.x] = 3;
-        } else if(cursor.pos.isEqual(new Pos(5,4),new Pos(6,4),new Pos(5,5),new Pos(6,5))) {
-            game.board[p.y][p.x] = 4;
-        } else if(cursor.pos.isEqual(new Pos(7,4),new Pos(8,4),new Pos(7,5),new Pos(8,5))) {
-            game.board[p.y][p.x] = 5;
-        }
+        if(cursor.pos.isEqual(new Pos(1,4),new Pos(2,4),new Pos(1,5),new Pos(2,5))) game.board[p.y][p.x] = 2;
+        if(cursor.pos.isEqual(new Pos(3,4),new Pos(4,4),new Pos(3,5),new Pos(4,5))) game.board[p.y][p.x] = 3;
+        if(cursor.pos.isEqual(new Pos(5,4),new Pos(6,4),new Pos(5,5),new Pos(6,5))) game.board[p.y][p.x] = 4;
+        if(cursor.pos.isEqual(new Pos(7,4),new Pos(8,4),new Pos(7,5),new Pos(8,5))) game.board[p.y][p.x] = 5;
         game.flag.promo.get(!game.flag.turn)[0] = false;
         return;
     }
