@@ -195,33 +195,34 @@ class Game {
             });
         }
         if(type == 1 && !stack) {
+            let calc = this.calcAll(!turn);
             // キャスリング処理
             if(this.flag.cast.get(turn)[1]) {
-                let tmp = this.calcAll(!turn);
-                console.log(tmp);
                 if(this.flag.cast.get(turn)[0]) {
                     // クイーンサイド
-                    console.log("c2");
                     if(turn && isEmpty(this.board,new Pos(2,8),new Pos(3,8),new Pos(4,8))) {
-                        console.log("c2.1");
-                        if(isEmpty(tmp,new Pos(2,8),new Pos(3,8),new Pos(4,8))) tiles[8][3] = 7;
+                        if(isEmpty(calc,new Pos(2,8),new Pos(3,8),new Pos(4,8))) tiles[8][3] = 7;
                     }
                     if(!turn && isEmpty(this.board,new Pos(2,1),new Pos(3,1),new Pos(4,1))) {
-                        console.log("c2.2");
-                        if(isEmpty(tmp,new Pos(2,1),new Pos(3,1),new Pos(4,1))) tiles[1][3] = 7;
+                        if(isEmpty(calc,new Pos(2,1),new Pos(3,1),new Pos(4,1))) tiles[1][3] = 7;
                     }
                 }
                 if(this.flag.cast.get(turn)[2]) {
                     // キングサイド
-                    console.log("c3");
                     if(turn && isEmpty(this.board,new Pos(6,8),new Pos(7,8))) {
-                        console.log("c3.1");
-                        if(isEmpty(tmp,new Pos(6,8),new Pos(7,8))) tiles[8][7] = 5;
+                        if(isEmpty(calc,new Pos(6,8),new Pos(7,8))) tiles[8][7] = 5;
                     }
                     if(!turn && isEmpty(this.board,new Pos(6,1),new Pos(7,1))) {
-                        console.log("c3.2");
-                        if(isEmpty(tmp,new Pos(6,1),new Pos(7,1))) tiles[1][7] = 5;
+                        if(isEmpty(calc,new Pos(6,1),new Pos(7,1))) tiles[1][7] = 5;
                     }
+                }
+            }
+            // 死地飛び込み回避
+            for(let y = -1;y < 2;y++) {
+                for(let x = -1;x < 2;x++) {
+                    if(x == 0 && y == 0) continue;
+                    let nx = from.x + x,ny = from.y + y;
+                    if(isField(new Pos(nx,ny)) && calc[ny][nx] != 0) tiles[ny][nx] = 0;
                 }
             }
         }
@@ -441,7 +442,9 @@ function Main() {
         if(cursor.isPut()) {
             game.move(cursor.holdPiece,cursor.pos);
             // チェック処理
-            
+            // チェックされてるかどうか
+            // 全探索
+            // チェックされないパターンがあれば終了
             cursor.isHold = false;
             game.flag.turn = !game.flag.turn;
         }
