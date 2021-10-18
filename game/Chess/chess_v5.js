@@ -27,10 +27,11 @@ class Master {
         }
     }
     setCanvas() {
-        createCanvas(this.size*10,this.size*10);
+        canvas.width = this.size*10;
+        canvas.height = this.size*10;
     }
     draw() {
-        push();
+        // push();
         let s = this.size;
         for(let y = 0; y < 10; y++) {
             for(let x = 0; x < 10; x++) {
@@ -42,10 +43,10 @@ class Master {
                 this.ctx.fillRect(s*x,s*y,s,s);
             }
         }
-        pop();
+        // pop();
     }
     static makeTiles() {
-        let Tile = [
+        let tiles = [
             [0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0],
@@ -57,18 +58,39 @@ class Master {
             [0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0]
         ];
-        return Tile;
+        return tiles;
     }
-    save() {
+    static save() {
+        let tiles = this.makeTiles();
+        for(let y = 0;y < 10;y++) {
+            for(let x = 0;x < 10;x++) {
+                tiles[y][x] = game.board[y][x];
+            }
+        }
+        let f = game.flag;
+        let cast=f.cast,promo=f.promo,enpass=f.enpass,turn=f.turn;
+        let flag = {
+            cast: new Map(),
+            promo: new Map(),
+            enpass: new Map(),
+            turn: turn,
+        };
+        flag.cast.set(true,[...cast.get(true)]);
+        flag.cast.set(false,[cast.get(false)[0],cast.get(false)[1],cast.get(false)[2]]);
+        flag.promo.set(true,[promo.get(true)[0],new Pos(promo.get(true)[1].x,promo.get(true)[1].y)]);
+        flag.promo.set(false,[promo.get(false)[0],new Pos(promo.get(false)[1].x,promo.get(false)[1].y)]);
+        flag.enpass.set(true,[enpass.get(true)[0],new Pos(enpass.get(true)[1].x,enpass.get(true)[1].y)]);
+        flag.enpass.set(false,[enpass.get(false)[0],new Pos(enpass.get(false)[1].x,enpass.get(false)[1].y)]);
         let data = {
-            flag: game.flag,
-            tiles: game.board
+            flag: flag,
+            tiles: tiles
         };
         return data;
     }
-    load(data) {
-        game.flag = data.flag;
-        game.board = data.tiles;
+    static load(data) {
+        // こっちでも同じことやる
+        game.flag = Object.assign({},data.flag);
+        game.board = Object.assign(data.tiles,{});
     }
 }
 
@@ -132,7 +154,6 @@ class Game {
         }
     }
     drawPromo() {
-        push();
         let img,s = master.size;
         master.ctx.fillStyle = '#ffffff';
         master.ctx.fillRect(s,s*4,s*8,s*2);
@@ -141,11 +162,10 @@ class Game {
             else img = master.imgB[i];
             master.ctx.drawImage(img,s*(i-2)*2+s,s*4,s*2,s*2);
         }
-        pop();
     }
     calcMove(from,tiles = Master.makeTiles(),stack = false) {
         // tilesに移動できる場所を書き込む
-        if(isEmpty(this.board,from)) return false;
+        if(isEmpty(this.board,from)) return tiles;
         let t = -1,turn = this.flag.turn,type = Math.abs(this.board[from.y][from.x]);
         if(0 < this.board[from.y][from.x]) t = 1;
 
@@ -222,13 +242,13 @@ class Game {
                 for(let x = -1;x < 2;x++) {
                     if(x == 0 && y == 0) continue;
                     let nx = from.x + x,ny = from.y + y;
-                    if(isField(new Pos(nx,ny)) && calc[ny][nx] != 0) tiles[ny][nx] = 0;
+                    if(isField(new Pos(nx,ny)) && !isEmpty(calc,new Pos(nx,ny))) tiles[ny][nx] = 0;
                 }
             }
         }
         return tiles;
     }
-    calcAll(turn) {
+    calcAll(turn = this.flag.turn) {
         let term,tiles = Master.makeTiles();
         if(turn) term = (i) => (0 < i);
         else term = (i) => (i < 0);
@@ -241,9 +261,9 @@ class Game {
         }
         return tiles;
     }
-    move(from,to,tiles = cursor.moveTiles) {
+    move(from,to,tiles = cursor.moveTiles,turn = this.flag.turn) {
         // ここに特殊処理全部記述
-        let type = tiles[to.y][to.x],turn = this.flag.turn,t=-1;
+        let type = tiles[to.y][to.x],t=-1;
         if(turn) t = 1;
         this.modify(from,to);
         switch (type) {
@@ -284,6 +304,46 @@ class Game {
         this.board[to.y][to.x] = this.board[from.y][from.x];
         this.board[from.y][from.x] = 0;
     }
+    isCheck() {
+        let king,tiles = this.calcAll(),turn = this.flag.turn;
+        for(let y = 1;y < 9;y++) {
+            for(let x = 1;x < 9;x++) {
+                if((this.board[y][x] == 1 && !turn) || (this.board[y][x] == -1 && turn)) {
+                    // 相手のキングの位置を取得
+                    king = new Pos(x,y);
+                }
+            }
+        }
+        console.log(king);
+        console.log(tiles);
+        if(isEmpty(tiles,king)) return false;
+        return true;
+    }
+    isCheckmate() {
+        for(let y = 1;y < 9;y++) {
+            for(let x = 1;x < 9;x++) {
+                // 敵駒を動かす
+                if(isEnemy(new Pos(x,y))) {
+                    let data = Master.save();
+                    let tiles = this.calcMove(new Pos(x,y));
+                    for(let ny = 1;ny < 9;ny++) {
+                        for(let nx = 1;nx < 9;nx++) {
+                            if(!isEmpty(tiles,new Pos(nx,ny))) {
+                                // 移動可能マスであれば
+                                this.move(new Pos(x,y),new Pos(nx,ny),tiles,!this.flag.turn);
+                                if(this.isCheck()) continue;
+                                // チェックされていなかったら
+                                Master.load(data);
+                                return false;
+                            }
+                        }
+                    }
+                    Master.load(data);
+                }
+            }
+        }
+        return true;
+    }
 }
 
 class Cursor {
@@ -294,15 +354,12 @@ class Cursor {
         this.holdPiece;
     }
     draw() {
-        push();
         let s = master.size;
         master.ctx.strokeStyle = '#3d88da';
         master.ctx.lineWidth = '4.0';
         master.ctx.strokeRect(s*this.pos.x,s*this.pos.y,s,s);
-        pop();
     }
     drawMove() {
-        push();
         let s = master.size;
         let p = this.holdPiece;
         for(let y = 1; y < 9; y++) {
@@ -316,7 +373,6 @@ class Cursor {
         }
         master.ctx.fillStyle = '#e65a50';
         master.ctx.fillRect(s*p.x,s*p.y,s,s);
-        pop();
     }
     move(x,y) {
         if(isField(new Pos(this.pos.x+x,this.pos.y+y))) {
@@ -352,9 +408,10 @@ class Pos {
     }
 }
 
-let master,game,cursor;
-function setup() {
+let canvas,master,game,cursor;
+window.onload = function setup() {
     // Class生成処理
+    canvas = document.getElementById('default');
     master = new Master();
     master.setImg();
     master.setCanvas();
@@ -402,7 +459,7 @@ function setup() {
                 }
                 drawF();
             });
-            canvas.addEventListener('click',(e) => {
+            document.addEventListener('click',(e) => {
 
                 let rect = canvas.getBoundingClientRect();
                 let x = Math.floor((e.clientX - rect.left) / ((rect.width) / 10));
@@ -427,14 +484,15 @@ function drawF() {
 }
 
 function Main() {
-    // ループするメインの処理を書くよ
+    // ループするメインの処理を書く
     console.log("Main");
     if(game.flag.promo.get(!game.flag.turn)[0]) {
-        let p = game.flag.promo.get(!game.flag.turn)[1];
-        if(cursor.pos.isEqual(new Pos(1,4),new Pos(2,4),new Pos(1,5),new Pos(2,5))) game.board[p.y][p.x] = 2;
-        if(cursor.pos.isEqual(new Pos(3,4),new Pos(4,4),new Pos(3,5),new Pos(4,5))) game.board[p.y][p.x] = 3;
-        if(cursor.pos.isEqual(new Pos(5,4),new Pos(6,4),new Pos(5,5),new Pos(6,5))) game.board[p.y][p.x] = 4;
-        if(cursor.pos.isEqual(new Pos(7,4),new Pos(8,4),new Pos(7,5),new Pos(8,5))) game.board[p.y][p.x] = 5;
+        let p = game.flag.promo.get(!game.flag.turn)[1],f = 1;
+        if(game.flag.turn) f = -1;
+        if(cursor.pos.isEqual(new Pos(1,4),new Pos(2,4),new Pos(1,5),new Pos(2,5))) game.board[p.y][p.x] = 2 * f;
+        if(cursor.pos.isEqual(new Pos(3,4),new Pos(4,4),new Pos(3,5),new Pos(4,5))) game.board[p.y][p.x] = 3 * f;
+        if(cursor.pos.isEqual(new Pos(5,4),new Pos(6,4),new Pos(5,5),new Pos(6,5))) game.board[p.y][p.x] = 4 * f;
+        if(cursor.pos.isEqual(new Pos(7,4),new Pos(8,4),new Pos(7,5),new Pos(8,5))) game.board[p.y][p.x] = 5 * f;
         game.flag.promo.get(!game.flag.turn)[0] = false;
         return;
     }
@@ -442,7 +500,64 @@ function Main() {
         if(cursor.isPut()) {
             game.move(cursor.holdPiece,cursor.pos);
             // チェック処理
-            // チェックされてるかどうか
+            // チェックしてるかどうか
+            if(game.isCheck()) {
+                if(game.isCheckmate()) {
+                    console.log("checkmate");
+                } else {
+                    console.log("check");
+                }
+            }
+            // let k,turn = game.flag.turn,calc = game.calcAll(turn),board = game.board;
+            // for(let y = 1;y < 9;y++) {
+            //     for(let x = 1;x < 9;x++) {
+            //         // 相手のキングの位置取得
+            //         if((board[y][x] == 1 && !turn) || (board[y][x] == -1 && turn)) k = new Pos(x,y);
+            //     }
+            // }
+            // if(!isEmpty(calc,k)) {
+            //     // チェックされていた場合
+            //     if(game.isCheck())
+            // }
+            // if(!isEmpty(calc,k)) {
+            //     // もしチェックしてたら
+            //     // そのままチェックメイト処理まで
+            //     let check = true;
+            //     calc = game.calcAll(!turn);
+            //     for(let y = 1;y < 9;y++) {
+            //         for(let x = 1;x < 9;x++) {
+            //             // 敵駒だったら
+            //             if(isArmy(new Pos(x,y),!turn)) {
+            //                 // 動ける場所計算して
+            //                 let tmp = game.calcMove(new Pos(x,y));
+            //                 for(let ny = 1;ny < 9;ny++) {
+            //                     for(let nx = 1;nx < 9;nx++) {
+            //                         // 全部動かす
+            //                         // save
+            //                         let data = master.save();
+            //                         if(!isEmpty(tmp,new Pos(x,y))) {
+            //                             game.move(new Pos(x,y),new Pos(nx,ny),tmp);
+            //                             // もっかいチェック処理
+            //                             let tmp2 = game.calcAll(turn);
+            //                             // チェックから外れているかどうか
+            //                             if(isEmpty(tmp2,k)) check = false;
+            //                         }
+            //                         // load
+            //                         master.load(data);
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     console.log("チェックメイト");
+            //     if(check) {
+            //         // チェックメイト
+            //         alert("congratulations")
+            //     } else {
+            //         // そうじゃない
+            //         console.log("じゃない");
+            //     }
+            // }
             // 全探索
             // チェックされないパターンがあれば終了
             cursor.isHold = false;
@@ -459,6 +574,6 @@ function Main() {
 
 const isField = (p) => (0 < Math.min(p.x,p.y) && Math.max(p.x,p.y) <= 8);
 const isEmpty = (tiles,...p) => (p.every(v => tiles[v.y][v.x] == 0));
-const isArmy = (p,t = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] == t));
-const isEnemy = (p,t = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] != t));
+const isArmy = (p,turn = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] == turn));
+const isEnemy = (p,turn = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] != turn));
 const isEven = num => (typeof num == 'number' || num instanceof Number) && num % 2 === 0;
