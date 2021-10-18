@@ -546,6 +546,7 @@ function Main() {
             if(game.isCheck()) {
                 if(game.isCheckmate()) {
                     console.log("checkmate");
+                    alert("congratulations!")
                 } else {
                     console.log("check");
                 }
