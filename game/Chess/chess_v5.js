@@ -367,6 +367,7 @@ class Game {
                     console.log(data);
                     master.saveData.push(data);
                     this.flag.turn = !this.flag.turn;
+                    // 絶対値とってるから味方コマでも相手駒として扱ってて謀反が起きてた
                     let tiles = this.calcMove(new Pos(x,y));
                     this.flag.turn = !this.flag.turn;
                     console.log("↓ tiles ↓");
