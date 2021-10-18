@@ -361,16 +361,24 @@ class Game {
                 // 敵駒を動かす
                 if(isEnemy(new Pos(x,y))) {
                     let data = Master.save();
+                    console.log("=====================");
+                    console.log("from: <" + x + "," + y + ">");
                     console.log("↓ data ↓");
                     console.log(data);
                     master.saveData.push(data);
+                    this.flag.turn = !this.flag.turn;
                     let tiles = this.calcMove(new Pos(x,y));
+                    this.flag.turn = !this.flag.turn;
+                    console.log("↓ tiles ↓");
+                    console.log(tiles);
                     for(let ny = 1;ny < 9;ny++) {
                         for(let nx = 1;nx < 9;nx++) {
                             if(!isEmpty(tiles,new Pos(nx,ny))) {
                                 // 移動可能マスであれば
                                 this.move(new Pos(x,y),new Pos(nx,ny),tiles,!this.flag.turn);
-                                console.log(new Pos(nx,ny));
+
+                                console.log("to: <" + nx + "," + ny + ">");
+                                console.log("↓ board ↓");
                                 console.log(this.board);
                                 if(this.isCheck()) continue;
                                 // チェックされていなかったら
