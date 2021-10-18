@@ -12,15 +12,20 @@ class Master {
             [0,2,1,2,1,2,1,2,1,0],
             [0,0,0,0,0,0,0,0,0,0]
         ];
-        this.imgW = [null,new Image(),new Image(),new Image(),new Image(),new Image(),new Image()];
-        this.loadImgW = [true,false,false,false,false,false,false];
-        this.imgB = [null,new Image(),new Image(),new Image(),new Image(),new Image(),new Image()];
-        this.loadImgB = [true,false,false,false,false,false,false];
+        this.imgW = [new Image(),new Image(),new Image(),new Image(),new Image(),new Image(),new Image()];
+        this.loadImgW = [false,false,false,false,false,false,false];
+        this.imgB = [new Image(),new Image(),new Image(),new Image(),new Image(),new Image(),new Image()];
+        this.loadImgB = [false,false,false,false,false,false,false];
         this.ctx = canvas.getContext('2d');
         this.size = Math.min(screen.width,screen.height)/16;
         this.saveData = [];
+        this.config = {
+            kingSafety: true
+        }
     }
     setImg() {
+        this.imgW[0].src = 'img/x.png'
+        this.imgB[0].src = 'img/x.png'
         for(let i = 1; i < 7; i++) {
             this.imgW[i].src = 'img/white/00' + i + '.png';
             this.imgB[i].src = 'img/black/00' + i + '.png';
@@ -31,7 +36,6 @@ class Master {
         canvas.height = this.size*10;
     }
     draw() {
-        // push();
         let s = this.size;
         for(let y = 0; y < 10; y++) {
             for(let x = 0; x < 10; x++) {
@@ -43,7 +47,6 @@ class Master {
                 this.ctx.fillRect(s*x,s*y,s,s);
             }
         }
-        // pop();
     }
     static makeTiles() {
         let tiles = [
@@ -76,7 +79,7 @@ class Master {
             turn: turn,
         };
         flag.cast.set(true,[...cast.get(true)]);
-        flag.cast.set(false,[cast.get(false)[0],cast.get(false)[1],cast.get(false)[2]]);
+        flag.cast.set(false,[...cast.get(false)]);
         flag.promo.set(true,[promo.get(true)[0],new Pos(promo.get(true)[1].x,promo.get(true)[1].y)]);
         flag.promo.set(false,[promo.get(false)[0],new Pos(promo.get(false)[1].x,promo.get(false)[1].y)]);
         flag.enpass.set(true,[enpass.get(true)[0],new Pos(enpass.get(true)[1].x,enpass.get(true)[1].y)]);
@@ -87,10 +90,29 @@ class Master {
         };
         return data;
     }
-    static load(data) {
+    static load(data,reload = false) {
         // こっちでも同じことやる
-        game.flag = Object.assign({},data.flag);
-        game.board = Object.assign(data.tiles,{});
+        game.board = this.makeTiles();
+        for(let y = 0;y < 10;y++) {
+            for(let x = 0;x < 10;x++) {
+                game.board[y][x] = data.tiles[y][x];
+            }
+        }
+        let df = data.flag;
+        let flag = {
+            cast: new Map(),
+            promo: new Map(),
+            enpass: new Map(),
+            turn: data.flag.turn,
+        };
+        flag.cast.set(true,[...df.cast.get(true)]);
+        flag.cast.set(false,[...df.cast.get(false)]);
+        flag.promo.set(true,[df.promo.get(true)[0],new Pos(df.promo.get(true)[1].x,df.promo.get(true)[1].y)]);
+        flag.promo.set(false,[df.promo.get(false)[0],new Pos(df.promo.get(false)[1].x,df.promo.get(false)[1].y)]);
+        flag.enpass.set(true,[df.enpass.get(true)[0],new Pos(df.enpass.get(true)[1].x,df.enpass.get(true)[1].y)]);
+        flag.enpass.set(false,[df.enpass.get(false)[0],new Pos(df.enpass.get(false)[1].x,df.enpass.get(false)[1].y)]);
+        game.flag = flag;
+        if(reload) drawF();
     }
 }
 
@@ -153,6 +175,11 @@ class Game {
             }
         }
     }
+    drawX(from) {
+        let s = master.size;
+        let img = master.imgW[0];
+        master.ctx.drawImage(img,s*from.x,s*from.y,s,s);
+    }
     drawPromo() {
         let img,s = master.size;
         master.ctx.fillStyle = '#ffffff';
@@ -182,11 +209,11 @@ class Game {
             }
             let l = new Pos(p.x-1,p.y);
             let r = new Pos(p.x+1,p.y);
-            if(isField(l) && isEnemy(l)) {
+            if(isField(l) && (isEnemy(l) || stack)) {
                 if((turn && l.y == 1) || (!turn && l.y == 8)) tiles[l.y][l.x] = 8;
                 else tiles[l.y][l.x] = 2;
             }
-            if(isField(r) && isEnemy(r)) {
+            if(isField(r) && (isEnemy(r) || stack)) {
                 if((turn && r.y == 1) || (!turn && r.y == 8)) tiles[r.y][r.x] = 8;
                 else tiles[r.y][r.x] = 2;
             }
@@ -216,6 +243,8 @@ class Game {
         }
         if(type == 1 && !stack) {
             let calc = this.calcAll(!turn);
+            console.log("↓ calc ↓");
+            console.log(calc);
             // キャスリング処理
             if(this.flag.cast.get(turn)[1]) {
                 if(this.flag.cast.get(turn)[0]) {
@@ -238,11 +267,13 @@ class Game {
                 }
             }
             // 死地飛び込み回避
-            for(let y = -1;y < 2;y++) {
-                for(let x = -1;x < 2;x++) {
-                    if(x == 0 && y == 0) continue;
-                    let nx = from.x + x,ny = from.y + y;
-                    if(isField(new Pos(nx,ny)) && !isEmpty(calc,new Pos(nx,ny))) tiles[ny][nx] = 0;
+            if(master.config.kingSafety) {
+                for(let y = -1;y < 2;y++) {
+                    for(let x = -1;x < 2;x++) {
+                        if(x == 0 && y == 0) continue;
+                        let nx = from.x + x,ny = from.y + y;
+                        if(isField(new Pos(nx,ny)) && !isEmpty(calc,new Pos(nx,ny))) tiles[ny][nx] = 6;
+                    }
                 }
             }
         }
@@ -305,17 +336,22 @@ class Game {
         this.board[from.y][from.x] = 0;
     }
     isCheck() {
-        let king,tiles = this.calcAll(),turn = this.flag.turn;
+        let king,tiles = this.calcAll(),turn = this.flag.turn,flag = true;
         for(let y = 1;y < 9;y++) {
             for(let x = 1;x < 9;x++) {
                 if((this.board[y][x] == 1 && !turn) || (this.board[y][x] == -1 && turn)) {
                     // 相手のキングの位置を取得
                     king = new Pos(x,y);
+                    flag = false;
                 }
             }
         }
-        console.log(king);
-        console.log(tiles);
+        if(flag) { 
+            console.error("\"KING\"の位置情報が存在しません");
+            return true;
+        }
+        // console.log(king);
+        // console.log(tiles);
         if(isEmpty(tiles,king)) return false;
         return true;
     }
@@ -325,12 +361,17 @@ class Game {
                 // 敵駒を動かす
                 if(isEnemy(new Pos(x,y))) {
                     let data = Master.save();
+                    console.log("↓ data ↓");
+                    console.log(data);
+                    master.saveData.push(data);
                     let tiles = this.calcMove(new Pos(x,y));
                     for(let ny = 1;ny < 9;ny++) {
                         for(let nx = 1;nx < 9;nx++) {
                             if(!isEmpty(tiles,new Pos(nx,ny))) {
                                 // 移動可能マスであれば
                                 this.move(new Pos(x,y),new Pos(nx,ny),tiles,!this.flag.turn);
+                                console.log(new Pos(nx,ny));
+                                console.log(this.board);
                                 if(this.isCheck()) continue;
                                 // チェックされていなかったら
                                 Master.load(data);
@@ -365,10 +406,11 @@ class Cursor {
         for(let y = 1; y < 9; y++) {
             for(let x = 1; x < 9; x++) {
                 let m = this.moveTiles[y][x];
-                if(m == 0 || m == 6) continue;
+                if(m == 0) continue;
                 if(isEven(m)) master.ctx.fillStyle = '#cfa01f';
                 else master.ctx.fillStyle = '#37c9be';
                 master.ctx.fillRect(s*x,s*y,s,s);
+                if(m == 6) game.drawX(new Pos(x,y));
             }
         }
         master.ctx.fillStyle = '#e65a50';
@@ -420,7 +462,7 @@ window.onload = function setup() {
     cursor = new Cursor();
     
     // 画像読み込み処理
-    for(let i = 1; i < 7; i++) {
+    for(let i = 0; i < 7; i++) {
         let imgW = master.imgW[i];
         let imgB = master.imgB[i];
         imgW.onload = function() {
