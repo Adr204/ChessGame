@@ -560,67 +560,15 @@ function Main() {
                     console.log("check");
                 }
             }
-            // let k,turn = game.flag.turn,calc = game.calcAll(turn),board = game.board;
-            // for(let y = 1;y < 9;y++) {
-            //     for(let x = 1;x < 9;x++) {
-            //         // 相手のキングの位置取得
-            //         if((board[y][x] == 1 && !turn) || (board[y][x] == -1 && turn)) k = new Pos(x,y);
-            //     }
-            // }
-            // if(!isEmpty(calc,k)) {
-            //     // チェックされていた場合
-            //     if(game.isCheck())
-            // }
-            // if(!isEmpty(calc,k)) {
-            //     // もしチェックしてたら
-            //     // そのままチェックメイト処理まで
-            //     let check = true;
-            //     calc = game.calcAll(!turn);
-            //     for(let y = 1;y < 9;y++) {
-            //         for(let x = 1;x < 9;x++) {
-            //             // 敵駒だったら
-            //             if(isArmy(new Pos(x,y),!turn)) {
-            //                 // 動ける場所計算して
-            //                 let tmp = game.calcMove(new Pos(x,y));
-            //                 for(let ny = 1;ny < 9;ny++) {
-            //                     for(let nx = 1;nx < 9;nx++) {
-            //                         // 全部動かす
-            //                         // save
-            //                         let data = master.save();
-            //                         if(!isEmpty(tmp,new Pos(x,y))) {
-            //                             game.move(new Pos(x,y),new Pos(nx,ny),tmp);
-            //                             // もっかいチェック処理
-            //                             let tmp2 = game.calcAll(turn);
-            //                             // チェックから外れているかどうか
-            //                             if(isEmpty(tmp2,k)) check = false;
-            //                         }
-            //                         // load
-            //                         master.load(data);
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     console.log("チェックメイト");
-            //     if(check) {
-            //         // チェックメイト
-            //         alert("congratulations")
-            //     } else {
-            //         // そうじゃない
-            //         console.log("じゃない");
-            //     }
-            // }
-            // 全探索
-            // チェックされないパターンがあれば終了
             cursor.isHold = false;
             game.flag.turn = !game.flag.turn;
+            return;
         }
-    } else {
-        if(cursor.isPick()) {
-            cursor.holdPiece = cursor.pos;
-            cursor.isHold = true;
-            cursor.moveTiles = game.calcMove(cursor.holdPiece);
-        }
+    }
+    if(cursor.isPick()) {
+        cursor.holdPiece = cursor.pos;
+        cursor.isHold = true;
+        cursor.moveTiles = game.calcMove(cursor.holdPiece);
     }
 }
 
