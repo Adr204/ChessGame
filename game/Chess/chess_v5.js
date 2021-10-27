@@ -564,6 +564,8 @@ function Main() {
             cursor.isHold = false;
             game.flag.turn = !game.flag.turn;
             return;
+        } else {
+            return;
         }
     }
     if(cursor.isPick()) {
