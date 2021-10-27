@@ -440,6 +440,7 @@ class Cursor {
         let M = this.moveTiles[this.pos.y][this.pos.x];
         if(this.pos.isEqual(P)) {
             this.isHold = false;
+            drawF();
             return false;
         } else if(M != 0 && M != 6) {
             return true;
