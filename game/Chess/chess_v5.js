@@ -76,7 +76,8 @@ class Master {
             cast: new Map(),
             promo: new Map(),
             enpass: new Map(),
-            turn: turn,
+            winner: new Map(),
+            turn: turn
         };
         flag.cast.set(true,[...cast.get(true)]);
         flag.cast.set(false,[...cast.get(false)]);
@@ -103,6 +104,7 @@ class Master {
             cast: new Map(),
             promo: new Map(),
             enpass: new Map(),
+            winner: new Map(),
             turn: data.flag.turn,
         };
         flag.cast.set(true,[...df.cast.get(true)]);
@@ -111,6 +113,8 @@ class Master {
         flag.promo.set(false,[df.promo.get(false)[0],new Pos(df.promo.get(false)[1].x,df.promo.get(false)[1].y)]);
         flag.enpass.set(true,[df.enpass.get(true)[0],new Pos(df.enpass.get(true)[1].x,df.enpass.get(true)[1].y)]);
         flag.enpass.set(false,[df.enpass.get(false)[0],new Pos(df.enpass.get(false)[1].x,df.enpass.get(false)[1].y)]);
+        flag.winner.set(true,[false]);
+        flag.winner.set(false,[false]);
         game.flag = flag;
         if(reload) drawF();
     }
@@ -152,7 +156,8 @@ class Game {
             cast: new Map(),
             promo: new Map(),
             enpass: new Map(),
-            turn: true,
+            winner: new Map(),
+            turn: true
         };
     }
     setFlag() {
@@ -162,6 +167,8 @@ class Game {
         this.flag.promo.set(false,[false,new Pos()]);
         this.flag.enpass.set(true,[false,new Pos()]);
         this.flag.enpass.set(false,[false,new Pos()]);
+        this.flag.winner.set(true,[false]);
+        this.flag.winner.set(false,[false]);
     }
     draw() {
         let s = master.size;
@@ -179,6 +186,12 @@ class Game {
         let s = master.size;
         let img = master.imgW[0];
         master.ctx.drawImage(img,s*from.x,s*from.y,s,s);
+    }
+    drawW() {
+        master.ctx.font = "96px serif";
+        master.ctx.fillStyle = "#e65a50";
+        if(this.flag.winner.get(true)[0]) master.ctx.fillText("White Win!",40,300);
+        else if(this.flag.winner.get(false)[0])master.ctx.fillText("Black Win!",40,300);
     }
     drawPromo() {
         let img,s = master.size;
@@ -296,7 +309,7 @@ class Game {
         // ここに特殊処理全部記述
         let type = tiles[to.y][to.x],t=-1;
         if(turn) t = 1;
-        this.modify(from,to);
+        let piece = this.modify(from,to);
         switch (type) {
             case 3:// ポーンの二マス移動
                 this.flag.enpass.get(turn)[0] = true;
@@ -329,11 +342,14 @@ class Game {
         if(from.isEqual(new Pos(8,1))) this.flag.cast.get(false)[2] = false;
 
         this.flag.enpass.get(!turn)[0] = false;
+        return piece;
     }
     modify(from,to) {
         // 移動処理のみ
+        let piece = this.board[to.y][to.x];
         this.board[to.y][to.x] = this.board[from.y][from.x];
         this.board[from.y][from.x] = 0;
+        return piece;
     }
     isCheck() {
         let king,tiles = this.calcAll(),turn = this.flag.turn,flag = true;
@@ -359,7 +375,7 @@ class Game {
         for(let y = 1;y < 9;y++) {
             for(let x = 1;x < 9;x++) {
                 // 敵駒を動かす
-                if(isEnemy(new Pos(x,y))) {
+                if(isArmy(new Pos(x,y))) {
                     let data = Master.save();
                     console.log("=====================");
                     console.log("from: <" + x + "," + y + ">");
@@ -533,11 +549,11 @@ function drawF() {
     game.draw();
     cursor.draw();
     if(game.flag.promo.get(!game.flag.turn)[0]) game.drawPromo();
+    game.drawW();
 }
 
 function Main() {
     // ループするメインの処理を書く
-    console.log("Main");
     if(game.flag.promo.get(!game.flag.turn)[0]) {
         let p = game.flag.promo.get(!game.flag.turn)[1],f = 1;
         if(game.flag.turn) f = -1;
@@ -550,13 +566,19 @@ function Main() {
     }
     if(cursor.isHold) {
         if(cursor.isPut()) {
-            game.move(cursor.holdPiece,cursor.pos);
+            let piece = game.move(cursor.holdPiece,cursor.pos);
+            if(Math.abs(piece) == 1) {
+                // 勝利画面へ推移
+                cursor.isHold = false;
+                if(piece == -1) game.flag.winner.get(true)[0] = true;
+                else game.flag.winner.get(false)[0] = true;
+                return 0;
+            }
             // チェック処理
             // チェックしてるかどうか
             if(game.isCheck()) {
                 if(game.isCheckmate()) {
-                    console.log("checkmate");
-                    alert("congratulations!")
+                    alert("checkmate");
                 } else {
                     console.log("check");
                 }
