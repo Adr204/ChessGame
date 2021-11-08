@@ -193,6 +193,12 @@ class Game {
         if(this.flag.winner.get(true)[0]) master.ctx.fillText("White Win!",40,300);
         else if(this.flag.winner.get(false)[0])master.ctx.fillText("Black Win!",40,300);
     }
+    drawR() {
+        master.ctx.font = "36px serif";
+        master.ctx.fillStyle = "#ffffff";
+        master.ctx.fillText("If you want to play more games",10,120);
+        master.ctx.fillText("Press the key [Shift + R]",80,180);
+    }
     drawPromo() {
         let img,s = master.size;
         master.ctx.fillStyle = '#ffffff';
@@ -504,6 +510,7 @@ window.onload = function setup() {
     // addEventListener
     let loadWait = setInterval(() => {
         if(master.loadImgW.every(v => v) && master.loadImgB.every(v => v)) {
+            drawF();
             addEventListener('keydown',(e) => {
                 switch (e.key) {
                     case 'ArrowUp':
@@ -521,6 +528,8 @@ window.onload = function setup() {
                     case 'Enter':
                         Main();
                         break;
+                    case 'R':
+                        location.reload();
                     default:
                         console.log(e.key);
                         break;
@@ -549,7 +558,10 @@ function drawF() {
     game.draw();
     cursor.draw();
     if(game.flag.promo.get(!game.flag.turn)[0]) game.drawPromo();
-    game.drawW();
+    if(game.flag.winner.get(true)[0] || game.flag.winner.get(false)[0]) {
+        game.drawW();
+        game.drawR();
+    }
 }
 
 function Main() {
