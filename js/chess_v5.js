@@ -24,11 +24,11 @@ class Master {
         }
     }
     setImg() {
-        this.imgW[0].src = 'img/x.png'
-        this.imgB[0].src = 'img/x.png'
+        this.imgW[0].src = 'assets/img/x.png'
+        this.imgB[0].src = 'assets/img/x.png'
         for(let i = 1; i < 7; i++) {
-            this.imgW[i].src = 'img/white/00' + i + '.png';
-            this.imgB[i].src = 'img/black/00' + i + '.png';
+            this.imgW[i].src = 'assets/img/white/00' + i + '.png';
+            this.imgB[i].src = 'assets/img/black/00' + i + '.png';
         }
     }
     setCanvas() {

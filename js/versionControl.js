@@ -21,7 +21,7 @@ function setver(ver = now) {
     console.log("The Selected version is " + ver);
 
     let script = document.createElement('script');
-    script.src = "chess_v" + ver + ".js";
+    script.src = "js/chess_v" + ver + ".js";
     document.head.appendChild(script);
 }
 

@@ -31,11 +31,11 @@ class Master {
         };
     }
     setImg() {
-        this.img[C(true)].src  = 'img/x.png';
-        this.img[C(false)].src = 'img/x.png';
+        this.img[C(true)].src  = 'assets/img/x.png';
+        this.img[C(false)].src = 'assets/img/x.png';
         for (let c = 0; c < 2; c++) {
             for (let i = 1; i < 7; i++) {
-                this.img[C(c)].src = 'img/' + C(c) + '/00' + i + '.jpg';
+                this.img[C(c)].src = 'assets/img/' + C(c) + '/00' + i + '.jpg';
             }
         }
     }

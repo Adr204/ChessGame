@@ -36,10 +36,10 @@ class Pieces {
     }
     setup() {
         for(let i = 1;i < 7;i++) {
-            this.imgW[i].src = "img/white/00" + i + ".png";
+            this.imgW[i].src = "assets/img/white/00" + i + ".png";
         }
         for(let i = 1;i < 7;i++) {
-            this.imgB[i].src = "img/black/00" + i + ".png";
+            this.imgB[i].src = "assets/img/black/00" + i + ".png";
         }
     }
     draw() {
