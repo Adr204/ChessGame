@@ -13,7 +13,7 @@
 // }
 
 var key = "Adr204.Chess.ver";
-var now = 6;
+var now = 5;
 
 function setver(ver = now) {
     Number(ver);
