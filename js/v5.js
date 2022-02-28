@@ -330,7 +330,7 @@ class Game {
             case 5:// キングサイドキャスリング
                 if(turn) { this.board[8][8] = 0; this.board[8][6] = 3; }
                 else { this.board[1][8] = 0; this.board[1][6] = -3; }
-                break; 　
+                break; 
             case 7:// クイーンサイドキャスリング
                 if(turn) { this.board[8][1] = 0; this.board[8][4] = 3; }
                 else { this.board[1][1] = 0; this.board[1][4] = -3; }
@@ -620,6 +620,8 @@ function Main() {
         cursor.moveTiles = game.calcMove(cursor.holdPiece);
     }
 }
+
+setup();
 
 const isField = (p) => (0 < Math.min(p.x,p.y) && Math.max(p.x,p.y) <= 8);
 const isEmpty = (tiles,...p) => (p.every(v => tiles[v.y][v.x] == 0));

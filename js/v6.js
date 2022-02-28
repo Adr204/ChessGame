@@ -31,11 +31,12 @@ class Master {
         };
     }
     setImg() {
+        let C = color;
         this.img[C(true)].src  = 'assets/img/x.png';
         this.img[C(false)].src = 'assets/img/x.png';
         for (let c = 0; c < 2; c++) {
             for (let i = 1; i < 7; i++) {
-                this.img[C(c)].src = 'assets/img/' + C(c) + '/00' + i + '.jpg';
+                this.img[C(c)][i].src = 'assets/img/' + C(c) + '/00' + i + '.jpg';
             }
         }
     }
@@ -115,10 +116,11 @@ class UI {
         this.pos.add(to);
     }
     pick() {
-
+        this.holdItem = this.pos.copy();
     }
     put() {
-        game.move
+        let ac = master.access;
+        game.move(ac(this.holdItem),ac(this.pos));
     }
 }
 
@@ -154,11 +156,11 @@ class Tile {
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             ];
     }
-    static copy(tile) {
+    copy() {
         let _tile = new Tile();
         for(let y = 1;y < 9;y++) {
             for(let x = 1;x < 9;x++) {
-                _tile[y][x] = tile[y][x];
+                _tile[y][x] = this[y][x];
             }
         }
 
@@ -213,7 +215,7 @@ function argError(...arg) {
 
 const isField = (p) => (0 < Math.min(p.x, p.y) && Math.max(p.x, p.y) <= 8);
 const isEmpty = (tiles, ...p) => (p.every(v => tiles[v.y][v.x] == 0));
-const C = (turn) => turn ? 'white' : 'black';
+const color = (turn) => turn ? 'white' : 'black';
 // const isPhone = () => navigator.userAgent.match(/iPhone|Android.+Mobile/) ? true : false;
 // const isArmy = (p,turn = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] == turn));
 // const isEnemy = (p,turn = game.flag.turn) => (!(isEmpty(game.board,p)) && (0 < game.board[p.y][p.x] != turn));

@@ -1,50 +1,42 @@
-// var list = [];
-// for(let i=1;i<7;i++) {
-//     let script = document.createElement('script');
-//     script.src = "chess_v" + i + ".js";
-//     list.push(script);
-// }
-// console.log(list);
-// function remove() {
-//     while(0 < document.body.getElementsByTagName('script').length) {
-//         var script01 = document.body.getElementsByTagName('script');
-//         document.body.removeChild(script01[0]);
-//     }
-// }
+//=============================================================================
+// バージョン管理用の関数ファイルです
+// [V.ex(任意のバージョン);]と入力することで
+// ページを再読み込みしバージョンを切り替えることができます
+// 
+// 自己満足のためのファイルです
+//=============================================================================
 
-var key = "Adr204.Chess.ver";
-var now = 5;
+class Version {
+    ex = function(ver) {
+        localStorage.setItem(key,ver);
+        window.location.reload();
+    };
+    setver = function(ver) {
+        ver = Number(ver);
+        if(typeof ver != 'number' || ver < 1) ver = stable;
+        if(!(0 < ver && ver <= stable)) console.log("サポート対象外のバージョンを指定しています。");
+        console.log("The selected version is" + ver);
 
-function setver(ver = now) {
-    Number(ver);
-    if(!(0 < ver && ver < now)) ver = now;
-    console.log("The Selected version is " + ver);
-
-    let script = document.createElement('script');
-    script.src = "js/chess_v" + ver + ".js";
-    document.head.appendChild(script);
+        let script = document.createElement('script');
+        script.src = 'js/v' + ver + '.js';
+        document.head.appendChild(script);
+    };
 }
 
-function exver(ver) {
-    localStorage.setItem(key,ver);
-    window.location.reload();
-}
+const key = "Adr204.Chess.ver";
+const stable = 5;
+const V = new Version();
 
-function test() {
-    setup();
-}
 
-window.onload = () => {
+window.onload = function() {
     let version = localStorage.getItem(key);
-    setver(version);
-    // import {setup} from './chess_v6';
     localStorage.removeItem(key);
-    let wait = setInterval(() => {
+    
+    V.setver(version);
+    let wait = setInterval(function() {
         if(window.setup != undefined) {
             setup();
             clearInterval(wait);
         }
     }, 100);
 }
-
-// 多分ﾖｼ!
